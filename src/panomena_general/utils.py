@@ -1,11 +1,20 @@
 import re
 import json
+import random
 import functools
 
 from django import template
 from django.conf import settings
 from django.http import HttpResponse
 from django.core.exceptions import ImproperlyConfigured
+
+
+def generate_filename(extention=None):
+    """Generates a random filename."""
+    elements = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456890'
+    name = ''.join([random.choice(elements) for n in range(8)])
+    if extention: return '%s.%s' % (name, extention)
+    else: return name
 
 
 def is_ajax_request(request):
