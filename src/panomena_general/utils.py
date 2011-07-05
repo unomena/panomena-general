@@ -154,3 +154,15 @@ def parse_kw_args(tagname, bits, args_spec=None, restrict=False):
         args.append((name, val))
     
     return args
+
+
+def formfield_extractor(model, extra_config):
+    """Extracts form fields from a model and applies extra config as
+    specified for each field.
+    
+    """
+    fields = {}
+    for field in model._meta.fields:
+        config = extra_config.get(field.name, {})
+        fields[field.name] = field.formfield(**config)
+    return fields
