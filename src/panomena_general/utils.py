@@ -1,5 +1,6 @@
 import re
 import json
+import functools
 
 from django import template
 from django.conf import settings
@@ -164,5 +165,5 @@ def formfield_extractor(model, extra_config):
     fields = {}
     for field in model._meta.fields:
         config = extra_config.get(field.name, {})
-        fields[field.name] = field.formfield(**config)
+        fields[field.name] = functools.partial(field.formfield, **config)
     return fields
