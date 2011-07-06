@@ -7,7 +7,7 @@ from django.template.loader import render_to_string
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.core.urlresolvers import reverse
 
-from exceptions import RequestContextRequiredException
+from panomena_general.exceptions import RequestContextRequiredException
 
 
 register = Library()
