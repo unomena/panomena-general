@@ -20,22 +20,16 @@ class PagingNode(template.Node):
 
     """
 
-    def __init__(self, objects, label, key, size, template, url):
+    def __init__(self, objects, key, size):
         self.objects = objects
-        self.label = label
         self.key = key
         self.size = size
-        self.template = template
-        self.url = url
 
     def render(self, context):
         # resolve variables
         objects = self.objects.resolve(context)
-        label = self.label.resolve(context)
         key = self.key.resolve(context)
         size = self.size.resolve(context)
-        template = self.template.resolve(context)
-        url = self.url.resolve(context)
         # get the request
         request = context.get('request')
         if request is None:
@@ -51,6 +45,43 @@ class PagingNode(template.Node):
         except (EmptyPage, InvalidPage):
             page = paginator.page(paginator.num_pages)
         context[key] = page
+        # return nothing to render
+        return ''
+
+
+@register.tag
+def paging(parser, token):
+    """Parser for the PagingNode tag node."""
+    bits = token.split_contents()
+    if len(bits) < 4:
+        raise TemplateSyntaxError('%r takes at least 3 arguments' % bits[0])
+    objects = parser.compile_filter(bits[1])
+    key = parser.compile_filter(bits[2])
+    size = parser.compile_filter(bits[3])
+    return PagingNode(objects, key, size)
+
+
+class PagingRenderNode(template.Node):
+    """Tag node for rendering paging controls."""
+
+    def __init__(self, page, key, label, template, url):
+        self.page = page
+        self.label = label
+        self.key = key
+        self.template = template
+        self.url = url
+
+    def render(self, context):
+        # resolve variables
+        page = self.page.resolve(context)
+        key = self.key.resolve(context)
+        label = self.label.resolve(context)
+        template = self.template.resolve(context)
+        url = self.url.resolve(context)
+        # get the request
+        request = context.get('request')
+        if request is None:
+            raise RequestContextRequiredException('paging tag')
         # determine the url
         if not url:
             url = context['request'].get_full_path()
@@ -63,33 +94,27 @@ class PagingNode(template.Node):
         url = urlparse.urlunparse(url)
         # add the neccecary to the url
         url += '?' if len(qs) == 0 else '&' 
-        # render the paging template with built context
-        context = {
+        # render the template if supplied
+        return render_to_string(template, {
             'page': page,
             'label': label,
             'key': key,
             'url': url
-        }
-        # render the template if supplied
-        if template:
-            return render_to_string(template, context)
-        else:
-            return ''
+        })
 
 
 @register.tag
-def paging(parser, token):
-    """Parser for the PagingNode tag node."""
+def paging_render(parser, token):
+    """Parser for the PagingRenderNode tag node."""
     bits = token.split_contents()
-    if len(bits) < 4:
+    if len(bits) < 5:
         raise TemplateSyntaxError('%r takes at least 4 arguments' % bits[0])
-    objects = parser.compile_filter(bits[1])
-    label = parser.compile_filter(bits[2])
-    key = parser.compile_filter(bits[3])
-    size = parser.compile_filter(bits[4])
-    template = parser.compile_filter(bits[5] if len(bits) > 5 else '')
-    url = parser.compile_filter(bits[6] if len(bits) > 6 else '')
-    return PagingNode(objects, label, key, size, template, url)
+    page = parser.compile_filter(bits[1])
+    key = parser.compile_filter(bits[2])
+    label = parser.compile_filter(bits[3])
+    template = parser.compile_filter(bits[4])
+    url = parser.compile_filter(bits[5] if len(bits) > 5 else '')
+    return PagingRenderNode(page, key, label, template, url)
 
 
 class IfHereNode(template.Node):
