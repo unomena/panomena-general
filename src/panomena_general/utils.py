@@ -7,6 +7,7 @@ from django import template
 from django.conf import settings
 from django.http import HttpResponse
 from django.core.exceptions import ImproperlyConfigured
+from django.shortcuts import redirect
 
 
 def generate_filename(extention=None):
@@ -28,6 +29,14 @@ def json_response(data):
         json.dumps(data),
         mimetype='application/json'
     )
+
+
+def ajax_redirect(request, url):
+    """Redirects via a json response if ajax was used in the request."""
+    ajax = is_ajax_request(request)
+    if ajax: response = json_redirect(url)
+    else: response = redirect(url)
+    return response
 
 
 class SettingsFetcher(object):
