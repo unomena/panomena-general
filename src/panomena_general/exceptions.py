@@ -3,10 +3,10 @@
 class RequestContextRequiredException(Exception):
     """Exception that should be raised when a RequestContext is required."""
 
-    def __init__(self, name=None):
-        if name:
-            message = "RequestContext required for '%s' to operate." % name
+    def __init__(self, value=None):
+        if value:
+            value = "RequestContext required for '%s' to operate." % value
         else:
-            message = "RequestContext required."
-        super(RequestContextRequiredException, self).__init__(message)
+            value = "RequestContext required."
+        super(RequestContextRequiredException, self).__init__(value)
 
