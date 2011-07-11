@@ -159,3 +159,78 @@ def verbose_name_plural(obj):
     # return the name
     return obj._meta.verbose_name_plural.title()
 
+
+class URLNextNode(template.defaulttags.URLNode):
+    """Tag that works like regular url tag but includes 'next' get parameter
+    when it picks it up in the request.
+
+    """
+
+    def __init__(self, urlnode):
+        super(URLNextNode, self).__init__(
+            urlnode.view_name,
+            urlnode.args,
+            urlnode.kwargs,
+            urlnode.asvar
+        )
+
+    def render(self, context):
+        url = super(URLNextNode, self).render(context)
+        # attempt to get the request
+        request = context.get('request')
+        if request is None:
+            raise RequestContextRequiredException('url_next tag')
+        # check for and add next url
+        next_url = request.GET.get('next')
+        if next_url:
+            url += '&' if '?' in url else '?'
+            url += 'next=%s' % next_url
+        # return the modified url
+        return url
+
+        
+@register.tag
+def url_next(parser, token):
+    """Parser function for URLNextNode tag node."""
+    urlnode = template.defaulttags.url(parser, token)
+    return URLNextNode(urlnode)
+
+
+class SmartURLNode(template.Node):
+    """Tag that pcks up the url of an object using a callable."""
+
+    def __init__(self, url_callable, obj, asvar):
+        self.url_callable = url_callable
+        self.obj = obj
+        self.asvar = asvar
+
+    def render(self, context):
+        # resolve variables_
+        url_callable = self.url_callable.resolve(context)
+        obj = self.obj.resolve(context)
+        asvar = self.asvar
+        # determine the url and return or assign
+        url = url_callable(obj)
+        if asvar is None:
+            return url
+        else:
+            context[asvar] = url
+            return ''
+
+@register.tag
+def new_smart_url(parser, token):
+    """Parser method for the SmartURLNode tag node."""
+    bits = token.split_contents()
+    # check for right amount of parameters
+    if len(bits) < 3:
+        raise TemplateSyntaxError('%r takes at least 2 arguments' % bits[0])
+    # determine var name if given
+    if len(bits) >= 2 and bits[-2] == 'as':
+        asvar = bits[-1]
+        bits = bits[:-2]
+    # parse the rest of the parameters
+    url_callable = parser.compile_filter(bits[1])
+    obj = parser.compile_filter(bits[2])
+    # build and return the node
+    return SmartURLNode(url_callable, obj, asvar)
+
