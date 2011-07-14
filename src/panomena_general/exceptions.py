@@ -10,3 +10,14 @@ class RequestContextRequiredException(Exception):
             value = "RequestContext required."
         super(RequestContextRequiredException, self).__init__(value)
 
+
+class ProfileRequiredException(Exception):
+    """Exception raised when no profile was found for a user object."""
+
+    def __init__(self, value=None):
+        if value:
+            value = "Profile object related to user required for '%s' " \
+                "to function correctly." % value
+        else:
+            value = "Profile object related to user required."
+        super(ProfileRequiredException, self).__init__(value)
