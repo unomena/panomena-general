@@ -217,6 +217,7 @@ class SmartURLNode(template.Node):
             context[asvar] = url
             return ''
 
+
 @register.tag
 def new_smart_url(parser, token):
     """Parser method for the SmartURLNode tag node."""
@@ -233,4 +234,41 @@ def new_smart_url(parser, token):
     obj = parser.compile_filter(bits[2])
     # build and return the node
     return SmartURLNode(url_callable, obj, asvar)
+
+
+class LikeNode(template.Node):
+    """Tag for displaying like information and actions."""
+
+    def __init__(self, obj, template):
+        self.obj = obj
+        self.template = template
+
+    def render(self, context):
+        # get the request object
+        request = context.get('request', None)
+        if request is None:
+            raise RequestContextRequiredException()
+        # resolve the arguments
+        obj = self.obj.resolve(context)
+        template = self.template.resolve(context)
+        # render the template
+        can_vote = obj.can_vote(request)
+        return render_to_string(template, {
+            'object': obj,
+            'can_vote': can_vote[0],
+            'status': can_vote[1],
+        })
+
+
+@register.tag
+def like(parser, token):
+    bits = token.split_contents()
+    # check for the right amount of arguments
+    if len(bits) < 3:
+        raise TemplateSyntaxError('%r takes at least 2 arguments' % bits[0])
+    # parse the arguments
+    obj = parser.compile_filter(bits[1])
+    template = parser.compile_filter(bits[2])
+    # build and return the node
+    return LikeNode(obj, template)
 
