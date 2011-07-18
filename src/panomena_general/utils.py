@@ -1,5 +1,6 @@
 import re
 import json
+import base64
 import random
 import functools
 
@@ -185,3 +186,10 @@ def formfield_extractor(model, extra_config):
         config = extra_config.get(field.name, {})
         fields[field.name] = functools.partial(field.formfield, **config)
     return fields
+
+
+def base64_url_decode(inp):
+    """Base64 URL decoder."""
+    padding_factor = (4 - len(inp) % 4) % 4
+    inp += "="*padding_factor
+    return base64.b64decode(unicode(inp).translate(dict(zip(map(ord, u'-_'), u'+/'))))
