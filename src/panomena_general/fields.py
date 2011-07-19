@@ -46,27 +46,39 @@ class CommaSeparatedEmailField(forms.Field):
 
 class CommaSeparatedLookupField(forms.Field):
     """Field for looking up an array of objects using values of
-    specified model fields.
+    specified model fields, determined by a method that analises
+    each provided value.
     
     """
 
+    default_error_messages = {
+        'unidentified': _(u"The '%s' value could not be indentified."),
+    }
+
     widget = CommaSeparatedInput
 
-    def __init__(self, model, fields, *args, **kwargs):
+    def __init__(self, model, identify, *args, **kwargs):
         self.model = model
-        self.fields = fields
+        self.identify = identify
         super(CommaSeparatedLookupField, self).__init__(*args, **kwargs)
 
     def clean(self, value):
+        error_messages = self.error_messages
         value = super(CommaSeparatedLookupField, self).clean(value)
         # return empty list for empty field
         if not value: return []
         # build the query
         query = Q()
         values = [v.strip() for v in value.split(',')]
-        for field in self.fields:
-            key = '%s__in' % field
-            query = query | Q(**{key: values})
+        # use the identify method if available
+        for value in values:
+            result = self.identify(value)
+            if result is None:
+                raise forms.ValidationError(
+                    error_messages['unidentified'] % value)
+            fields, value = result
+            for field in fields:
+                query = query | Q(**{field: value})
         # return the results
         return self.model.objects.filter(query).all()
 
