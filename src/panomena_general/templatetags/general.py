@@ -6,6 +6,7 @@ from django.template import Library, TemplateSyntaxError
 from django.template.loader import render_to_string
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.core.urlresolvers import reverse
+from django.contrib.contenttypes.models import ContentType
 
 from panomena_general.exceptions import RequestContextRequiredException
 
@@ -271,4 +272,40 @@ def like(parser, token):
     template = parser.compile_filter(bits[2])
     # build and return the node
     return LikeNode(obj, template)
+
+
+class ContentTypeNode(template.Node):
+    """Tag node for retrieving content type of an object."""
+
+    def __init__(self, obj, asvar):
+        self.obj = obj
+        self.asvar = asvar
+
+    def render(self, context):
+        # resolve the arguments
+        obj = self.obj.resolve(context)
+        # get the content type
+        content_type = ContentType.objects.get_for_model(obj)
+        # set variable in context
+        context[self.asvar] = content_type
+        return ''
+
+
+@register.tag
+def content_type(parser, token):
+    """Parser function for building a ContentTypeNode."""
+    bits = token.split_contents()
+    # check for minimum amount of arguments
+    if len(bits) < 4:
+        raise TemplateSyntaxError('%r takes at least 1 argument and a ' \
+            'variable name to be assigned to' % bits[0])
+    # determine var name if given
+    if len(bits) >= 2 and bits[-2] == 'as':
+        asvar = bits[-1]
+        bits = bits[:-2]
+    # parse the rest of the arguments
+    obj = parser.compile_filter(bits[1])
+    # build and return the node
+    return ContentTypeNode(obj, asvar)
+ 
 
