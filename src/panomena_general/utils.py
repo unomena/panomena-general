@@ -23,7 +23,7 @@ def get_content_type(content_type):
     if match is None:
         raise InvalidContentTypeException()
     content_type = content_type.split('.')
-    return ContentType.get_by_natural_key(*content_type)
+    return ContentType.objects.get_by_natural_key(*content_type)
 
 
 def generate_filename(extention=None):
