@@ -7,8 +7,23 @@ import functools
 from django import template
 from django.conf import settings
 from django.http import HttpResponse
-from django.core.exceptions import ImproperlyConfigured
 from django.shortcuts import redirect
+from django.core.exceptions import ImproperlyConfigured
+from django.contrib.contenttypes.models import ContentType
+
+from panomena_general.exceptions import InvalidContentTypeException
+
+
+CONTENT_TYPE_RE = re.compile(r'^([^.]+).([^.]+)$')
+
+
+def get_content_type(content_type):
+    """Validate content type natural key and retrieve if valid."""
+    match = CONTENT_TYPE_RE.match(content_type)
+    if match is None:
+        raise InvalidContentTypeException()
+    content_type = content_type.split('.')
+    return ContentType.get_by_natural_key(*content_type)
 
 
 def generate_filename(extention=None):

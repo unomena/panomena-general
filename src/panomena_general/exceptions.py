@@ -21,3 +21,14 @@ class ProfileRequiredException(Exception):
         else:
             value = "Profile object related to user required."
         super(ProfileRequiredException, self).__init__(value)
+
+
+class InvalidContentTypeException(Exception):
+    """Exception raised when an invalid content type string is
+    encountered.
+    
+    """
+
+    def __init__(self):
+        value = "Profile object related to user required."
+        super(InvalidContentTypeException, self).__init__(value)
