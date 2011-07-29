@@ -272,3 +272,13 @@ def content_type(parser, token):
     return ContentTypeNode(obj, asvar)
  
 
+@register.simple_tag
+def content_object_url(view, obj):
+    """Builds a url for a content object to a specified view."""
+    content_type = ContentType.objects.get_for_model(obj)
+    content_type = '.'.join([content_type.app_label, content_type.model])
+    return reverse(view, kwargs={
+        'object_id': obj.id,
+        'content_type': content_type,
+    })
+
