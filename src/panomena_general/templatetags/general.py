@@ -2,6 +2,7 @@ import urlparse
 import urllib
 
 from django import template
+from django.conf import settings
 from django.template import Library, TemplateSyntaxError
 from django.template.loader import render_to_string
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
@@ -272,3 +273,7 @@ def content_type(parser, token):
     return ContentTypeNode(obj, asvar)
  
 
+@register.simple_tag
+def setting(key):
+    """Returns the value of setting."""
+    return getattr(settings, key)
