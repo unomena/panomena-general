@@ -93,13 +93,19 @@ def class_from_string(path):
     return getattr(imp, path[-1])
 
 
-def json_redirect(url):
+def json_redirect(url, textarea=False):
     """Creates an http response containing json with a redirect url."""
     response = {'redirect': url}
-    return HttpResponse(
-        json.dumps(response),
-        mimetype='application/json'
-    )
+    if textarea:
+        return HttpResponse(
+            '<textarea>%s</textarea>' % json.dumps(response),
+            mimetype='text/html'
+        )
+    else:
+        return HttpResponse(
+            json.dumps(response),
+            mimetype='application/json'
+        )
 
 
 def parse_kw_args(tagname, bits, args_spec=None, restrict=False):
