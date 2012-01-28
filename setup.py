@@ -11,6 +11,6 @@ setup(
     package_dir = {'': 'src'},
     dependency_links = [],
     install_requires = [
-        'Django==1.3',
+        'Django',
     ],
 )
